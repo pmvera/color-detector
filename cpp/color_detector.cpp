@@ -10,12 +10,10 @@
 
 std::map<std::string, std::tuple<cv::Scalar_<double>, cv::Scalar_<double>>> colours = {
   {"Rojo", std::make_tuple(cv::Scalar(155,25,0), cv::Scalar(179,255,255))},
-  {"Azul", std::make_tuple(cv::Scalar(100,200,50), cv::Scalar(140,255,255))}
+  {"Azul", std::make_tuple(cv::Scalar(100,200,50), cv::Scalar(140,255,255))},
+  {"Verde", std::make_tuple(cv::Scalar(65,55,90), cv::Scalar(90,255,255))}
 };
 
-//colours = {"Rojo": (Scalar(155,25,0), Scalar(179,255,255)),
-//           "Azul": (Scalar(100,200,200), Scalar(140,255,255))
-//           }
 
 cv::Mat colorFilter(const cv::Mat& src, std::tuple<cv::Scalar_<double>, cv::Scalar_<double>> hsvInterval)
 {
@@ -35,7 +33,6 @@ int main( int argc, char** argv )
     std::cout << "Cannot open the web cam" << std::endl;
     return -1;
   }
-   //inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
 
   while (true)
   {
@@ -53,23 +50,25 @@ int main( int argc, char** argv )
 
     cv::cvtColor(imgOriginal, imgHSV, cv::COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
-    cv::Mat imgThresholded;
+    cv::Mat imgThresholded, img_dilated;
 
     std::map<std::string, std::tuple<cv::Scalar_<double>, cv::Scalar_<double>>>::iterator it = colours.begin();
     for (std::pair<std::string, std::tuple<cv::Scalar_<double>, cv::Scalar_<double>>> element : colours) {
 
       imgThresholded = colorFilter(imgHSV, element.second);
 
-      int numWhitePixels = cv::countNonZero(imgThresholded);
+      cv::dilate(imgThresholded, img_dilated, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(8,8)));
+
+      int numWhitePixels = cv::countNonZero(img_dilated);
       if (numWhitePixels > 10000) {
         std::cout << element.first << ": "<< numWhitePixels << '\n';
 
         cv::Mat result;
-        cv::bitwise_and(imgOriginal, imgOriginal, result, imgThresholded);
+        cv::bitwise_and(imgOriginal, imgOriginal, result, img_dilated);
 
         cv::imshow("Result Image", result); //show the thresholded image
-        cv::imshow("Original", imgOriginal); //show the original image
       }
+              cv::imshow("Original", imgOriginal); //show the original image
     }
 
     //morphological closing (fill small holes in the foreground)

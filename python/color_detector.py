@@ -17,37 +17,36 @@ while 1:
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     #Get HSV interval for mask
-    col_min = np.uint8([[[0, 0, 70]]])
-    col_max = np.uint8([[[170, 100, 255]]])
-    hsv_col_min = cv2.cvtColor(col_min,cv2.COLOR_BGR2HSV)
-    hsv_col_max = cv2.cvtColor(col_max,cv2.COLOR_BGR2HSV)
-    print (hsv_col_min, hsv_col_max)
-    #
-    lower = np.array([125,100,0])
-    upper = np.array([179,255,255])
+    #col_min = np.uint8([[[0, 0, 70]]])
+    #col_max = np.uint8([[[170, 100, 255]]])
+    #hsv_col_min = cv2.cvtColor(col_min,cv2.COLOR_BGR2HSV)
+    #hsv_col_max = cv2.cvtColor(col_max,cv2.COLOR_BGR2HSV)
+    #print (hsv_col_min, hsv_col_max)
 
-    #for colour in colours:
-    #    lower = np.array(colours[colour][0])
-    #    upper = np.array(colours[colour][1])
+    #lower = np.array([125,100,0])
+    #upper = np.array([179,255,255])
 
-    mask = cv2.inRange(hsv, lower, upper)
-    img_erosion = cv2.erode(mask, np.ones((5,5), np.uint8), iterations=1)
-    res = cv2.bitwise_and(frame, frame, mask=img_erosion)
+    for colour in colours:
+        lower = np.array(colours[colour][0])
+        upper = np.array(colours[colour][1])
 
-    contours, hierarchy = cv2.findContours(img_erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        mask = cv2.inRange(hsv, lower, upper)
+        img_dilated = cv2.dilate(mask, np.ones((8,8), np.uint8), iterations=1)
+        res = cv2.bitwise_and(frame, frame, mask=img_dilated)
 
-    cv2.drawContours(frame, contours, -1, (0, 255, 0), 3)
-    n_white_pix = np.sum(mask == 255)
+        contours, hierarchy = cv2.findContours(img_dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    #print(colour, n_white_pix)
-    if n_white_pix > 10000:
-        print("Red", n_white_pix)
+        cv2.drawContours(frame, contours, -1, (0, 255, 0), 3)
+        n_white_pix = np.sum(mask == 255)
 
-    cv2.imshow('mask', mask)
-    cv2.imshow('morph', img_erosion)
-    cv2.imshow('res', res)
-    cv2.imshow('frame', frame)
+        #print(colour, n_white_pix)
+        if n_white_pix > 10000:
+            print("Red", n_white_pix)
 
+        cv2.imshow('mask', mask)
+        cv2.imshow('morph', img_dilated)
+        cv2.imshow('res', res)
+        cv2.imshow('frame', frame)
 
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
