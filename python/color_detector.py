@@ -7,51 +7,46 @@ width = cap.get(3)  # float
 height = cap.get(4)  # float
 total_size = width * height
 
-colours = {"Rojo": ([155,25,0], [179,255,255]),
+colours = {"Rojo": ([125,100,0], [179,255,255]),
            "Azul": ([100,200,50], [140,255,255]),
-           #"Verde": ([50,255,40], [70,255,60])
+           "Verde": ([65,55,90], [90,255,255])
            #"Amarillo": ([103, 86, 65], [145, 133, 128])
            }
-
-boundaries = [
-    ([17, 15, 100], [50, 56, 200]),
-    ([50, 31, 4], [100, 88, 50]),
-    ([25, 146, 190], [62, 174, 250]),
-    ([103, 86, 65], [145, 133, 128])
-]
-
 while 1:
     _, frame = cap.read()
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     #Get HSV interval for mask
-    #col = np.uint8([[[0, 0, 0]]])
-    #hsv_col = cv2.cvtColor(col,cv2.COLOR_BGR2HSV)
-    #print (hsv_col)
+    col_min = np.uint8([[[0, 0, 70]]])
+    col_max = np.uint8([[[170, 100, 255]]])
+    hsv_col_min = cv2.cvtColor(col_min,cv2.COLOR_BGR2HSV)
+    hsv_col_max = cv2.cvtColor(col_max,cv2.COLOR_BGR2HSV)
+    print (hsv_col_min, hsv_col_max)
+    #
+    lower = np.array([125,100,0])
+    upper = np.array([179,255,255])
 
-    for colour in colours:
-        lower = np.array(colours[colour][0])
-        upper = np.array(colours[colour][1])
-    #lower = np.array([100,200,200])
-    #upper = np.array([140,255,255])
+    #for colour in colours:
+    #    lower = np.array(colours[colour][0])
+    #    upper = np.array(colours[colour][1])
 
-        mask = cv2.inRange(hsv, lower, upper)
+    mask = cv2.inRange(hsv, lower, upper)
+    img_erosion = cv2.erode(mask, np.ones((5,5), np.uint8), iterations=1)
+    res = cv2.bitwise_and(frame, frame, mask=img_erosion)
 
-        #dilation = cv2.dilate(mask, np.ones((10, 10), np.uint8), iterations=1)
-        # contours, hierarchy = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(img_erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        res = cv2.bitwise_and(frame, frame, mask=mask)
+    cv2.drawContours(frame, contours, -1, (0, 255, 0), 3)
+    n_white_pix = np.sum(mask == 255)
 
-        # cv2.drawContours(mask, contours, -1, (0, 255, 0), 3)
-        n_white_pix = np.sum(mask == 255)
+    #print(colour, n_white_pix)
+    if n_white_pix > 10000:
+        print("Red", n_white_pix)
 
-        #print(colour, n_white_pix)
-        if n_white_pix > 10000:
-            print(colour, n_white_pix)
-            cv2.imshow('dilation', mask)
-            cv2.imshow('res', res)
-
-        cv2.imshow('frame', frame)
+    cv2.imshow('mask', mask)
+    cv2.imshow('morph', img_erosion)
+    cv2.imshow('res', res)
+    cv2.imshow('frame', frame)
 
 
     k = cv2.waitKey(5) & 0xFF
